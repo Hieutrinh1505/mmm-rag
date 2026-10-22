@@ -1,0 +1,25 @@
+services:
+  postgres:
+    # Pinned: pgvector 0.8.0 on Postgres 17
+    image: pgvector/pgvector:0.8.0-pg17
+    container_name: mmm-rag-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mmm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mmm}
+      POSTGRES_DB: ${POSTGRES_DB:-mmm_rag}
+    ports:
+      # 5433 on the host: 5432 is used by another local project's Postgres
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs once, on first start with an empty volume
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata:
